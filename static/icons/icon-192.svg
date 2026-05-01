@@ -1,0 +1,50 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="96" cy="96" r="96" fill="#4f46e5"/>
+  
+  <!-- Main Scissors Icon -->
+  <g transform="translate(48, 48)">
+    <!-- Left Blade -->
+    <path d="M24 16C29.5 16 34 20.5 34 26C34 31.5 29.5 36 24 36C18.5 36 14 31.5 14 26C14 20.5 18.5 16 24 16Z" fill="white" opacity="0.9"/>
+    <circle cx="24" cy="26" r="6" fill="#4f46e5"/>
+    
+    <!-- Right Blade -->
+    <path d="M72 60C77.5 60 82 64.5 82 70C82 75.5 77.5 80 72 80C66.5 80 62 75.5 62 70C62 64.5 66.5 60 72 60Z" fill="white" opacity="0.9"/>
+    <circle cx="72" cy="70" r="6" fill="#4f46e5"/>
+    
+    <!-- Connecting Lines -->
+    <path d="M30 32L66 64" stroke="white" stroke-width="3" stroke-linecap="round"/>
+    <path d="M30 20L66 76" stroke="white" stroke-width="3" stroke-linecap="round"/>
+    
+    <!-- Cutting Line (decorative) -->
+    <path d="M40 48L56 48" stroke="white" stroke-width="2" stroke-linecap="round" stroke-dasharray="4,4" opacity="0.8"/>
+    
+    <!-- Handle Details -->
+    <path d="M18 22C16 22 14 24 14 26C14 28 16 30 18 30" stroke="white" stroke-width="2" stroke-linecap="round" fill="none"/>
+    <path d="M78 66C80 66 82 68 82 70C82 72 80 74 78 74" stroke="white" stroke-width="2" stroke-linecap="round" fill="none"/>
+  </g>
+  
+  <!-- Decorative Elements -->
+  <g opacity="0.3">
+    <!-- Thread/Yarn Lines -->
+    <path d="M30 30C40 40 50 50 60 60" stroke="white" stroke-width="1" stroke-linecap="round" fill="none"/>
+    <path d="M35 25C45 35 55 45 65 55" stroke="white" stroke-width="1" stroke-linecap="round" fill="none"/>
+    
+    <!-- Small Dots (Pins) -->
+    <circle cx="140" cy="40" r="2" fill="white"/>
+    <circle cx="150" cy="50" r="2" fill="white"/>
+    <circle cx="160" cy="45" r="2" fill="white"/>
+    
+    <!-- Measurement Lines -->
+    <path d="M20 160L40 160" stroke="white" stroke-width="1"/>
+    <path d="M20 155L20 165" stroke="white" stroke-width="1"/>
+    <path d="M40 155L40 165" stroke="white" stroke-width="1"/>
+    
+    <path d="M160 140L160 160" stroke="white" stroke-width="1"/>
+    <path d="M155 140L165 140" stroke="white" stroke-width="1"/>
+    <path d="M155 160L165 160" stroke="white" stroke-width="1"/>
+  </g>
+  
+  <!-- Border Ring -->
+  <circle cx="96" cy="96" r="90" fill="none" stroke="white" stroke-width="2" opacity="0.2"/>
+</svg>

@@ -1,0 +1,137 @@
+{
+  "name": "Tailoring Shop Management",
+  "short_name": "TailoringShop",
+  "description": "Comprehensive management solution for women's tailoring businesses in India",
+  "version": "1.0.0",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#4f46e5",
+  "background_color": "#ffffff",
+  "scope": "/",
+  "lang": "en-IN",
+  "dir": "ltr",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/static/images/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard view on desktop"
+    },
+    {
+      "src": "/static/images/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mobile dashboard view"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add New Customer",
+      "short_name": "New Customer",
+      "description": "Quickly add a new customer",
+      "url": "/customers/add",
+      "icons": [
+        {
+          "src": "/static/icons/icon-192.svg",
+          "sizes": "192x192",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Create Order",
+      "short_name": "New Order",
+      "description": "Create a new tailoring order",
+      "url": "/orders/add",
+      "icons": [
+        {
+          "src": "/static/icons/icon-192.svg",
+          "sizes": "192x192",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Pending Orders",
+      "short_name": "Pending",
+      "description": "View pending orders dashboard",
+      "url": "/pending-orders",
+      "icons": [
+        {
+          "src": "/static/icons/icon-192.svg",
+          "sizes": "192x192",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "short_name": "Reports",
+      "description": "View business reports and analytics",
+      "url": "/reports",
+      "icons": [
+        {
+          "src": "/static/icons/icon-192.svg",
+          "sizes": "192x192",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "/orders/add",
+    "method": "GET",
+    "params": {
+      "title": "customer_name",
+      "text": "description",
+      "url": "reference_url"
+    }
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "mailto",
+      "url": "/customers/add?email=%s"
+    },
+    {
+      "protocol": "tel",
+      "url": "/customers/add?phone=%s"
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": ["focus-existing", "auto"]
+  },
+  "handle_links": "preferred",
+  "file_handlers": [
+    {
+      "action": "/import",
+      "accept": {
+        "text/csv": [".csv"],
+        "application/vnd.ms-excel": [".xls"],
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"]
+      }
+    }
+  ]
+}
