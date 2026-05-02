@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: tailoring-shop
+    runtime: python3
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn main:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SESSION_SECRET
+        generateValue: true
+
+  - type: cron
+    name: daily-backup
+    runtime: python3
+    buildCommand: pip install -r requirements.txt
+    schedule: "0 2 * * *"  # Daily at 2 AM UTC
+    command: python backup.py
