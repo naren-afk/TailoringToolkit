@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+
+{% block title %}Create New Order - Tailoring Shop Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">Create New Order</h1>
+            <a href="{{ url_for('orders.index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Orders
+            </a>
+        </div>
+    </div>
+</div>
+
+<form method="POST" novalidate>
+    <div class="row">
+        <!-- Customer Selection -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-person"></i> Customer Selection
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="customer_id" class="form-label">Select Customer <span class="text-danger">*</span></label>
+                        <select class="form-select" id="customer_id" name="customer_id" required>
+                            <option value="">Choose customer...</option>
+                            {% for customer in customers %}
+                            <option value="{{ customer.id }}" 
+                                    data-phone="{{ customer.phone }}"
+                                    {% if request.args.get('customer_id')|int == customer.id %}selected{% endif %}>
+                                {{ customer.name }} - {{ customer.phone }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            Don't see the customer? <a href="{{ url_for('customers.add') }}" target="_blank">Add new customer</a>
+                        </div>
+                    </div>
+                    
+                    <div id="customer-info" class="alert alert-info" style="display: none;">
+                        <strong>Customer Details:</strong>
+                        <div id="customer-details"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Details -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-bag"></i> Order Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="dress_type" class="form-label">Dress Type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="dress_type" name="dress_type" required>
+                            <option value="">Select dress type...</option>
+                            {% for dress_type in dress_types %}
+                            <option value="{{ dress_type }}">{{ dress_type }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" 
+                                  placeholder="Describe specific requirements, fabric, design details, etc."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" 
+                               value="1" min="1" max="10">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Dates -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-calendar"></i> Schedule
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="order_date" class="form-label">Order Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="order_date" name="order_date" 
+                               value="{{ today }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="delivery_date" class="form-label">Delivery Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="delivery_date" name="delivery_date" required>
+                        <div class="form-text">
+                            Promised delivery date to the customer
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Initial Status</label>
+                        <select class="form-select" id="status" name="status">
+                            {% for status_value, status_label in order_statuses %}
+                            <option value="{{ status_value }}" {% if status_value == 'pending' %}selected{% endif %}>
+                                {{ status_label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pricing -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-currency-rupee"></i> Pricing
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="stitching_cost" class="form-label">Stitching Cost <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" step="0.01" class="form-control" id="stitching_cost" 
+                                   name="stitching_cost" placeholder="0.00" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="advance_paid" class="form-label">Advance Payment</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" step="0.01" class="form-control" id="advance_paid" 
+                                   name="advance_paid" placeholder="0.00" value="0">
+                        </div>
+                        <div class="form-text">
+                            Amount paid in advance by the customer
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <strong>Balance Due:</strong> ₹<span id="balance_display">0.00</span>
+                        <br><small class="text-muted">Automatically calculated: Cost - Advance</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Measurements Preview (if available) -->
+    <div class="row" id="measurements-preview" style="display: none;">
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-rulers"></i> Available Measurements
+                    </h5>
+                </div>
+                <div class="card-body" id="measurements-content">
+                    <!-- Measurements will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Form Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('orders.index') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Create Order
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const customerSelect = document.getElementById('customer_id');
+    const customerInfo = document.getElementById('customer-info');
+    const customerDetails = document.getElementById('customer-details');
+    const measurementsPreview = document.getElementById('measurements-preview');
+    const stitchingCostInput = document.getElementById('stitching_cost');
+    const advancePaidInput = document.getElementById('advance_paid');
+    const balanceDisplay = document.getElementById('balance_display');
+    const orderDateInput = document.getElementById('order_date');
+    const deliveryDateInput = document.getElementById('delivery_date');
+    
+    // Customer selection change
+    customerSelect.addEventListener('change', function() {
+        if (this.value) {
+            const selectedOption = this.options[this.selectedIndex];
+            const phone = selectedOption.dataset.phone;
+            
+            customerDetails.innerHTML = `
+                <strong>Name:</strong> ${selectedOption.text.split(' - ')[0]}<br>
+                <strong>Phone:</strong> ${phone}
+            `;
+            customerInfo.style.display = 'block';
+            
+            // Load measurements (you can implement AJAX here)
+            // For now, we'll just show the preview section
+            measurementsPreview.style.display = 'block';
+        } else {
+            customerInfo.style.display = 'none';
+            measurementsPreview.style.display = 'none';
+        }
+    });
+    
+    // Calculate balance
+    function calculateBalance() {
+        const cost = parseFloat(stitchingCostInput.value) || 0;
+        const advance = parseFloat(advancePaidInput.value) || 0;
+        const balance = Math.max(0, cost - advance);
+        balanceDisplay.textContent = balance.toFixed(2);
+    }
+    
+    stitchingCostInput.addEventListener('input', calculateBalance);
+    advancePaidInput.addEventListener('input', calculateBalance);
+    
+    // Set minimum delivery date (tomorrow)
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    deliveryDateInput.min = tomorrow.toISOString().split('T')[0];
+    
+    // Auto-set delivery date based on order date
+    orderDateInput.addEventListener('change', function() {
+        if (this.value) {
+            const orderDate = new Date(this.value);
+            orderDate.setDate(orderDate.getDate() + 7); // Default 7 days
+            deliveryDateInput.value = orderDate.toISOString().split('T')[0];
+        }
+    });
+    
+    // Form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Clear previous validation states
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        document.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+        
+        // Validate customer selection
+        if (!customerSelect.value) {
+            showError(customerSelect, 'Please select a customer');
+            isValid = false;
+        }
+        
+        // Validate dress type
+        const dressTypeSelect = document.getElementById('dress_type');
+        if (!dressTypeSelect.value) {
+            showError(dressTypeSelect, 'Please select a dress type');
+            isValid = false;
+        }
+        
+        // Validate stitching cost
+        const cost = parseFloat(stitchingCostInput.value);
+        if (!cost || cost <= 0) {
+            showError(stitchingCostInput, 'Please enter a valid stitching cost');
+            isValid = false;
+        }
+        
+        // Validate advance payment
+        const advance = parseFloat(advancePaidInput.value) || 0;
+        if (advance > cost) {
+            showError(advancePaidInput, 'Advance payment cannot exceed stitching cost');
+            isValid = false;
+        }
+        
+        // Validate delivery date
+        const orderDate = new Date(orderDateInput.value);
+        const deliveryDate = new Date(deliveryDateInput.value);
+        if (deliveryDate <= orderDate) {
+            showError(deliveryDateInput, 'Delivery date must be after order date');
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+        }
+    });
+    
+    function showError(input, message) {
+        input.classList.add('is-invalid');
+        const feedback = document.createElement('div');
+        feedback.className = 'invalid-feedback';
+        feedback.textContent = message;
+        input.parentNode.appendChild(feedback);
+    }
+    
+    // Trigger initial calculations
+    calculateBalance();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}WhatsApp Messaging - Settings{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">WhatsApp Messaging Controls</h1>
+            <a href="{{ url_for('settings.index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Settings
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Configuration Status -->
+<div class="row mb-4">
+    <div class="col-12">
+        {% if whatsapp_configured %}
+        <div class="alert alert-success" role="alert">
+            <i class="bi bi-check-circle"></i> <strong>WhatsApp messaging is configured!</strong> 
+            You can send messages to customers automatically using Meta's WhatsApp Business API.
+        </div>
+        {% else %}
+        <div class="alert alert-warning" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> <strong>WhatsApp messaging not configured.</strong>
+            <br>To enable WhatsApp notifications, please configure these environment variables:
+            <ul class="mb-0 mt-2">
+                <li><code>WHATSAPP_ACCESS_TOKEN</code> - Your Meta WhatsApp Business API access token</li>
+                <li><code>WHATSAPP_PHONE_NUMBER_ID</code> - Your WhatsApp Business phone number ID</li>
+            </ul>
+            <p class="mt-2 mb-0">Get these credentials from your <a href="https://developers.facebook.com/apps/" target="_blank">Meta for Developers</a> dashboard.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Quick Statistics -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <h3 class="text-warning">{{ overdue_orders }}</h3>
+                <p class="text-muted mb-0">Overdue Orders</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <h3 class="text-success">{{ stitched_orders }}</h3>
+                <p class="text-muted mb-0">Ready for Pickup</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card border-info">
+            <div class="card-body text-center">
+                <i class="bi bi-whatsapp fs-1 text-info"></i>
+                <p class="text-muted mb-0">WhatsApp Ready</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Messaging Actions -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-broadcast"></i> Bulk Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if overdue_orders > 0 %}
+                    <form method="POST" action="{{ url_for('settings.send_overdue_reminders_action') }}" class="d-inline">
+                        <button type="submit" class="btn btn-warning w-100" 
+                                onclick="return confirm('Send reminders to all {{ overdue_orders }} overdue orders?')">
+                            <i class="bi bi-exclamation-triangle"></i> 
+                            Send Overdue Reminders ({{ overdue_orders }})
+                        </button>
+                    </form>
+                    {% else %}
+                    <button class="btn btn-outline-warning w-100" disabled>
+                        <i class="bi bi-check-circle"></i> No Overdue Orders
+                    </button>
+                    {% endif %}
+                    
+                    <form method="POST" action="{{ url_for('settings.send_festival_greetings_action') }}" class="d-inline">
+                        <button type="submit" class="btn btn-primary w-100" 
+                                onclick="return confirm('Send festival greetings to all customers?')">
+                            <i class="bi bi-party-hat"></i> Send Festival Greetings
+                        </button>
+                    </form>
+                    
+                    <form method="POST" action="{{ url_for('settings.send_daily_summary_action') }}" class="d-inline">
+                        <button type="submit" class="btn btn-info w-100">
+                            <i class="bi bi-graph-up"></i> Generate Daily Summary
+                        </button>
+                    </form>
+                    
+                    <a href="{{ url_for('settings.bulk_message') }}" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-chat-dots"></i> Custom Bulk Message
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Test Messaging -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-send"></i> Test Message
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if whatsapp_configured %}
+                <form method="POST" action="{{ url_for('settings.test_message') }}">
+                    <div class="mb-3">
+                        <label for="phone_number" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" id="phone_number" name="phone_number" 
+                               placeholder="919876543210" required>
+                        <div class="form-text">Enter without + sign (e.g., 919876543210 for India)</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Test Message</label>
+                        <textarea class="form-control" id="message" name="message" rows="3" required>Hello! This is a test message from your tailoring shop management system. 🪡✨</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-send"></i> Send Test Message
+                    </button>
+                </form>
+                {% else %}
+                <div class="text-center text-muted">
+                    <i class="bi bi-exclamation-triangle display-4"></i>
+                    <p class="mt-2">Configure Meta WhatsApp Business API credentials to enable test messaging</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Automatic Messaging Info -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-info-circle"></i> Automatic Messaging Features
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-check-circle text-success"></i> Order Welcome Messages</h6>
+                        <p class="text-muted">Automatically sent when new orders are created with order details, payment info, and delivery date.</p>
+                        
+                        <h6><i class="bi bi-check-circle text-success"></i> Status Updates</h6>
+                        <p class="text-muted">Sent when order status changes (pending → in progress → stitched → delivered).</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-clock text-warning"></i> Pickup Reminders</h6>
+                        <p class="text-muted">Reminders for customers when orders are ready for pickup but not collected.</p>
+                        
+                        <h6><i class="bi bi-star text-info"></i> Loyalty Messages</h6>
+                        <p class="text-muted">Appreciation messages for loyal customers with special offers.</p>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <h6>Message Templates Include:</h6>
+                    <ul>
+                        <li>Customer name personalization</li>
+                        <li>Order number and details</li>
+                        <li>Payment and balance information</li>
+                        <li>Delivery dates and status updates</li>
+                        <li>Professional formatting with emojis</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-tools"></i> Additional Tools
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('settings.customer_loyalty') }}" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-star"></i><br>Customer Loyalty
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('settings.bulk_message') }}" class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-chat-dots"></i><br>Bulk Messaging
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('settings.backup_settings') }}" class="btn btn-outline-success w-100">
+                            <i class="bi bi-shield-check"></i><br>Backup Settings
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('reports.index') }}" class="btn btn-outline-info w-100">
+                            <i class="bi bi-graph-up"></i><br>Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

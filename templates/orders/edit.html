@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Order {{ order.order_number }} - Tailoring Shop Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">Edit Order - {{ order.order_number }}</h1>
+            <div>
+                <a href="{{ url_for('orders.view', id=order.id) }}" class="btn btn-outline-info me-2">
+                    <i class="bi bi-eye"></i> View Details
+                </a>
+                <a href="{{ url_for('orders.index') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Orders
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="POST" novalidate>
+    <div class="row">
+        <!-- Customer Info (Read-only) -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-person"></i> Customer Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <div><strong>Name:</strong> {{ order.customer.name }}</div>
+                        <div><strong>Phone:</strong> {{ order.customer.phone }}</div>
+                        {% if order.customer.address %}
+                        <div><strong>Address:</strong> {{ order.customer.address }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="text-center">
+                        <a href="{{ url_for('customers.view', id=order.customer.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-person"></i> View Customer Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Details -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-bag"></i> Order Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Order Number</label>
+                        <input type="text" class="form-control" value="{{ order.order_number }}" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="dress_type" class="form-label">Dress Type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="dress_type" name="dress_type" required>
+                            {% for dress_type in dress_types %}
+                            <option value="{{ dress_type }}" {% if dress_type == order.dress_type %}selected{% endif %}>
+                                {{ dress_type }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3">{{ order.description or '' }}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" 
+                               value="{{ order.quantity }}" min="1" max="10">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Dates and Status -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-calendar"></i> Schedule & Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Order Date</label>
+                        <input type="text" class="form-control" value="{{ order.order_date.strftime('%d/%m/%Y') }}" readonly>
+                        <div class="form-text">Order date cannot be changed</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="delivery_date" class="form-label">Delivery Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="delivery_date" name="delivery_date" 
+                               value="{{ order.delivery_date }}" required>
+                        {% if order.is_overdue %}
+                        <div class="form-text text-danger">
+                            <i class="bi bi-exclamation-triangle"></i> This order is overdue!
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            {% for status_value, status_label in order_statuses %}
+                            <option value="{{ status_value }}" {% if status_value == order.status %}selected{% endif %}>
+                                {{ status_label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pricing -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-currency-rupee"></i> Pricing
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="stitching_cost" class="form-label">Stitching Cost <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" step="0.01" class="form-control" id="stitching_cost" 
+                                   name="stitching_cost" value="{{ order.stitching_cost }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="advance_paid" class="form-label">Advance Payment</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" step="0.01" class="form-control" id="advance_paid" 
+                                   name="advance_paid" value="{{ order.advance_paid }}">
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <strong>Current Balance:</strong> ₹<span id="balance_display">{{ "%.2f"|format(order.balance) }}</span>
+                        <br><small class="text-muted">Balance = Cost - Advance - Additional Payments</small>
+                    </div>
+                    
+                    {% if order.payments %}
+                    <div class="mt-3">
+                        <h6 class="text-muted">Additional Payments:</h6>
+                        <ul class="list-unstyled">
+                            {% for payment in order.payments %}
+                            <li class="small">
+                                <i class="bi bi-check-circle text-success"></i> 
+                                ₹{{ "%.2f"|format(payment.amount) }} 
+                                ({{ payment.created_at.strftime('%d/%m/%Y') }})
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        <strong>Total Additional Payments: ₹{{ "%.2f"|format(order.payments | sum(attribute='amount')) }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Order History -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-clock-history"></i> Order History
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="text-muted">
+                                <strong>Created:</strong> {{ order.created_at.strftime('%d %B %Y at %I:%M %p') }}<br>
+                                <strong>Last Updated:</strong> {{ order.updated_at.strftime('%d %B %Y at %I:%M %p') }}
+                            </small>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-end">
+                                {% if order.status == 'delivered' %}
+                                <span class="badge bg-success">Order Completed</span>
+                                {% elif order.is_overdue %}
+                                <span class="badge bg-danger">Overdue</span>
+                                {% else %}
+                                <span class="badge bg-{{ order.status_color }}">{{ order.status.replace('_', ' ').title() }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Form Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <a href="{{ url_for('orders.view', id=order.id) }}" class="btn btn-outline-secondary me-2">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="bi bi-trash"></i> Delete Order
+                            </button>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Update Order
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete order <strong>{{ order.order_number }}</strong>?</p>
+                <p class="text-danger"><small>
+                    <i class="bi bi-exclamation-triangle"></i> 
+                    This action cannot be undone. All payment records associated with this order will also be deleted.
+                </small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('orders.delete', id=order.id) }}" class="d-inline">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Delete Order
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const stitchingCostInput = document.getElementById('stitching_cost');
+    const advancePaidInput = document.getElementById('advance_paid');
+    const balanceDisplay = document.getElementById('balance_display');
+    
+    // Calculate balance
+    function calculateBalance() {
+        const cost = parseFloat(stitchingCostInput.value) || 0;
+        const advance = parseFloat(advancePaidInput.value) || 0;
+        const additionalPayments = {{ order.payments | sum(attribute='amount') or 0 }};
+        const balance = Math.max(0, cost - advance - additionalPayments);
+        balanceDisplay.textContent = balance.toFixed(2);
+    }
+    
+    stitchingCostInput.addEventListener('input', calculateBalance);
+    advancePaidInput.addEventListener('input', calculateBalance);
+    
+    // Form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Clear previous validation states
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        document.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+        
+        // Validate stitching cost
+        const cost = parseFloat(stitchingCostInput.value);
+        if (!cost || cost <= 0) {
+            showError(stitchingCostInput, 'Please enter a valid stitching cost');
+            isValid = false;
+        }
+        
+        // Validate advance payment
+        const advance = parseFloat(advancePaidInput.value) || 0;
+        if (advance > cost) {
+            showError(advancePaidInput, 'Advance payment cannot exceed stitching cost');
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+        }
+    });
+    
+    function showError(input, message) {
+        input.classList.add('is-invalid');
+        const feedback = document.createElement('div');
+        feedback.className = 'invalid-feedback';
+        feedback.textContent = message;
+        input.parentNode.appendChild(feedback);
+    }
+});
+</script>
+{% endblock %}

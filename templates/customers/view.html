@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+
+{% block title %}{{ customer.name }} - Customer Details - Tailoring Shop Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">{{ customer.name }}</h1>
+            <div>
+                <a href="{{ url_for('orders.add') }}?customer_id={{ customer.id }}" class="btn btn-success me-2">
+                    <i class="bi bi-plus-circle"></i> New Order
+                </a>
+                <a href="{{ url_for('customers.edit', id=customer.id) }}" class="btn btn-warning me-2">
+                    <i class="bi bi-pencil"></i> Edit Customer
+                </a>
+                <a href="{{ url_for('customers.index') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Customers
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Customer Information -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-person"></i> Customer Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label text-muted">Name</label>
+                    <p class="h5">{{ customer.name }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-muted">Phone Number</label>
+                    <p>
+                        <a href="tel:{{ customer.phone }}" class="text-decoration-none">
+                            <i class="bi bi-telephone"></i> {{ customer.phone }}
+                        </a>
+                    </p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-muted">Address</label>
+                    <p>{{ customer.address or 'No address provided' }}</p>
+                </div>
+                
+                <hr>
+                
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="mb-2">
+                            <span class="h4 text-primary">{{ customer.orders|length }}</span>
+                        </div>
+                        <small class="text-muted">Total Orders</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="mb-2">
+                            <span class="h4 text-success">{{ customer.measurements|length }}</span>
+                        </div>
+                        <small class="text-muted">Dress Types</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="mb-2">
+                            <span class="h4 text-info">
+                                {{ customer.orders | selectattr('status', 'ne', 'delivered') | list | length }}
+                            </span>
+                        </div>
+                        <small class="text-muted">Pending</small>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <small class="text-muted">
+                    <strong>Customer since:</strong> {{ customer.created_at.strftime('%d %B %Y') }}<br>
+                    <strong>Last updated:</strong> {{ customer.updated_at.strftime('%d %B %Y') }}
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Measurements -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-rulers"></i> Measurements
+                </h5>
+                <a href="{{ url_for('customers.edit', id=customer.id) }}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-pencil"></i> Edit Measurements
+                </a>
+            </div>
+            <div class="card-body">
+                {% if measurements %}
+                <ul class="nav nav-tabs" id="measurementTabs" role="tablist">
+                    {% for dress_type in dress_types %}
+                    {% if measurements.get(dress_type) %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {% if loop.first %}active{% endif %}" 
+                                id="{{ dress_type.lower().replace(' ', '_') }}-tab" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#{{ dress_type.lower().replace(' ', '_') }}-pane" 
+                                type="button" role="tab">
+                            {{ dress_type }}
+                        </button>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+                
+                <div class="tab-content mt-3" id="measurementTabContent">
+                    {% for dress_type in dress_types %}
+                    {% if measurements.get(dress_type) %}
+                    {% set measurement = measurements[dress_type] %}
+                    <div class="tab-pane fade {% if loop.first %}show active{% endif %}" 
+                         id="{{ dress_type.lower().replace(' ', '_') }}-pane" role="tabpanel">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-3">Basic Measurements</h6>
+                                <div class="row">
+                                    {% if measurement.bust %}
+                                    <div class="col-6 mb-2">
+                                        <strong>Bust:</strong> {{ measurement.bust }}"
+                                    </div>
+                                    {% endif %}
+                                    {% if measurement.waist %}
+                                    <div class="col-6 mb-2">
+                                        <strong>Waist:</strong> {{ measurement.waist }}"
+                                    </div>
+                                    {% endif %}
+                                    {% if measurement.hip %}
+                                    <div class="col-6 mb-2">
+                                        <strong>Hip:</strong> {{ measurement.hip }}"
+                                    </div>
+                                    {% endif %}
+                                    {% if measurement.shoulder %}
+                                    <div class="col-6 mb-2">
+                                        <strong>Shoulder:</strong> {{ measurement.shoulder }}"
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-3">Detailed Measurements</h6>
+                                <div class="row">
+                                    {% if measurement.arm_length %}
+                                    <div class="col-6 mb-2">
+                                        <strong>Arm Length:</strong> {{ measurement.arm_length }}"
+                                    </div>
+                                    {% endif %}
+                                    {% if measurement.blouse_length %}
+                                    <div class="col-6 mb-2">
+                                        <strong>Blouse Length:</strong> {{ measurement.blouse_length }}"
+                                    </div>
+                                    {% endif %}
+                                    {% if measurement.kurti_length %}
+                                    <div class="col-6 mb-2">
+                                        <strong>Kurti Length:</strong> {{ measurement.kurti_length }}"
+                                    </div>
+                                    {% endif %}
+                                    {% if measurement.salwar_length %}
+                                    <div class="col-6 mb-2">
+                                        <strong>Salwar Length:</strong> {{ measurement.salwar_length }}"
+                                    </div>
+                                    {% endif %}
+                                    {% if measurement.bottom_length %}
+                                    <div class="col-6 mb-2">
+                                        <strong>Bottom Length:</strong> {{ measurement.bottom_length }}"
+                                    </div>
+                                    {% endif %}
+                                    {% if measurement.neck_depth %}
+                                    <div class="col-6 mb-2">
+                                        <strong>Neck Depth:</strong> {{ measurement.neck_depth }}"
+                                    </div>
+                                    {% endif %}
+                                    {% if measurement.back_neck_depth %}
+                                    <div class="col-6 mb-2">
+                                        <strong>Back Neck:</strong> {{ measurement.back_neck_depth }}"
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if measurement.notes %}
+                        <div class="mt-3">
+                            <h6 class="text-muted">Special Notes</h6>
+                            <p class="text-muted">{{ measurement.notes }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                Last updated: {{ measurement.updated_at.strftime('%d %B %Y at %I:%M %p') }}
+                            </small>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-rulers display-4 text-muted"></i>
+                    <h5 class="mt-3 text-muted">No measurements recorded</h5>
+                    <p class="text-muted">Add measurements to streamline the order process</p>
+                    <a href="{{ url_for('customers.edit', id=customer.id) }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Add Measurements
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Order History -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-bag"></i> Order History ({{ orders|length }})
+                </h5>
+                <a href="{{ url_for('orders.add') }}?customer_id={{ customer.id }}" class="btn btn-sm btn-success">
+                    <i class="bi bi-plus-circle"></i> New Order
+                </a>
+            </div>
+            <div class="card-body">
+                {% if orders %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Dress Type</th>
+                                <th>Order Date</th>
+                                <th>Delivery Date</th>
+                                <th>Cost</th>
+                                <th>Balance</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr class="{% if order.is_overdue %}table-danger{% endif %}">
+                                <td>
+                                    <a href="{{ url_for('orders.view', id=order.id) }}" class="text-decoration-none">
+                                        {{ order.order_number }}
+                                    </a>
+                                </td>
+                                <td>{{ order.dress_type }}</td>
+                                <td>{{ order.order_date.strftime('%d/%m/%Y') }}</td>
+                                <td>
+                                    {{ order.delivery_date.strftime('%d/%m/%Y') }}
+                                    {% if order.is_overdue %}
+                                    <br><small class="text-danger">Overdue!</small>
+                                    {% endif %}
+                                </td>
+                                <td>₹{{ "%.2f"|format(order.stitching_cost) }}</td>
+                                <td>
+                                    {% if order.balance > 0 %}
+                                    <span class="text-danger">₹{{ "%.2f"|format(order.balance) }}</span>
+                                    {% else %}
+                                    <span class="text-success">Paid</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ order.status_color }}">
+                                        {{ order.status.replace('_', ' ').title() }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{{ url_for('orders.view', id=order.id) }}" 
+                                           class="btn btn-outline-primary" title="View Order">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        {% if order.status != 'delivered' %}
+                                        <a href="{{ url_for('orders.edit', id=order.id) }}" 
+                                           class="btn btn-outline-warning" title="Edit Order">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Order Summary -->
+                <div class="row mt-4">
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h5 class="text-primary">{{ orders|length }}</h5>
+                            <small class="text-muted">Total Orders</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h5 class="text-success">₹{{ "%.2f"|format(orders | sum(attribute='stitching_cost')) }}</h5>
+                            <small class="text-muted">Total Business</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h5 class="text-warning">{{ orders | selectattr('status', 'ne', 'delivered') | list | length }}</h5>
+                            <small class="text-muted">Pending Orders</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h5 class="text-danger">₹{{ "%.2f"|format(orders | sum(attribute='balance')) }}</h5>
+                            <small class="text-muted">Pending Payments</small>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-bag display-4 text-muted"></i>
+                    <h5 class="mt-3 text-muted">No orders yet</h5>
+                    <p class="text-muted">Start by creating the first order for this customer</p>
+                    <a href="{{ url_for('orders.add') }}?customer_id={{ customer.id }}" class="btn btn-success">
+                        <i class="bi bi-plus-circle"></i> Create First Order
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

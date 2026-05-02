@@ -1,0 +1,400 @@
+{% extends "base.html" %}
+
+{% block title %}Order {{ order.order_number }} - Tailoring Shop Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">Order {{ order.order_number }}</h1>
+            <div>
+                {% if order.status != 'delivered' %}
+                <a href="{{ url_for('orders.edit', id=order.id) }}" class="btn btn-warning me-2">
+                    <i class="bi bi-pencil"></i> Edit Order
+                </a>
+                {% endif %}
+                <a href="{{ url_for('orders.generate_invoice', id=order.id) }}" class="btn btn-success me-2">
+                    <i class="bi bi-receipt"></i> Generate Invoice
+                </a>
+                <a href="{{ url_for('orders.index') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Orders
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Order Status Alert -->
+{% if order.is_overdue %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Order Overdue!</h4>
+            <p>This order was due on {{ order.delivery_date.strftime('%d %B %Y') }} and is now overdue.</p>
+        </div>
+    </div>
+</div>
+{% elif order.status == 'stitched' %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-success" role="alert">
+            <h4 class="alert-heading"><i class="bi bi-check-circle"></i> Order Ready for Pickup!</h4>
+            <p>This order is stitched and ready for customer pickup.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <!-- Customer Information -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-person"></i> Customer Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label text-muted">Customer Name</label>
+                    <p class="h5">
+                        <a href="{{ url_for('customers.view', id=order.customer.id) }}" class="text-decoration-none">
+                            {{ order.customer.name }}
+                        </a>
+                    </p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-muted">Phone Number</label>
+                    <p>
+                        <a href="tel:{{ order.customer.phone }}" class="text-decoration-none">
+                            <i class="bi bi-telephone"></i> {{ order.customer.phone }}
+                        </a>
+                    </p>
+                </div>
+                
+                {% if order.customer.address %}
+                <div class="mb-3">
+                    <label class="form-label text-muted">Address</label>
+                    <p>{{ order.customer.address }}</p>
+                </div>
+                {% endif %}
+                
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('customers.view', id=order.customer.id) }}" class="btn btn-outline-primary">
+                        <i class="bi bi-eye"></i> View Customer Details
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Order Details -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-bag"></i> Order Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Order Number</label>
+                            <p class="h5 text-primary">{{ order.order_number }}</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Dress Type</label>
+                            <p>{{ order.dress_type }}</p>
+                        </div>
+                        
+                        {% if order.description %}
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Description</label>
+                            <p>{{ order.description }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Quantity</label>
+                            <p>{{ order.quantity }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Order Date</label>
+                            <p>{{ order.order_date.strftime('%d %B %Y') }}</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Delivery Date</label>
+                            <p {% if order.is_overdue %}class="text-danger"{% endif %}>
+                                {{ order.delivery_date.strftime('%d %B %Y') }}
+                                {% if order.is_overdue %}
+                                <br><small><strong>Overdue!</strong></small>
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Current Status</label>
+                            <p>
+                                <span class="badge bg-{{ order.status_color }} fs-6">
+                                    {{ order.status.replace('_', ' ').title() }}
+                                </span>
+                            </p>
+                        </div>
+                        
+                        <!-- Quick Status Update -->
+                        {% if order.status != 'delivered' %}
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Quick Status Update</label>
+                            <div class="d-flex gap-1 flex-wrap">
+                                {% for status_value, status_label in [('in_progress', 'Start Work'), ('stitched', 'Mark Stitched'), ('delivered', 'Mark Delivered')] %}
+                                {% if status_value != order.status %}
+                                <form method="POST" action="{{ url_for('orders.quick_status_update', id=order.id) }}" class="d-inline">
+                                    <input type="hidden" name="status" value="{{ status_value }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-{% if status_value == 'delivered' %}success{% elif status_value == 'stitched' %}info{% else %}warning{% endif %}">
+                                        {{ status_label }}
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row text-center">
+                    <div class="col-3">
+                        <div class="mb-2">
+                            <span class="h4 text-primary">₹{{ "%.2f"|format(order.stitching_cost) }}</span>
+                        </div>
+                        <small class="text-muted">Total Cost</small>
+                    </div>
+                    <div class="col-3">
+                        <div class="mb-2">
+                            <span class="h4 text-success">₹{{ "%.2f"|format(order.advance_paid) }}</span>
+                        </div>
+                        <small class="text-muted">Advance Paid</small>
+                    </div>
+                    <div class="col-3">
+                        <div class="mb-2">
+                            <span class="h4 text-info">₹{{ "%.2f"|format(payments | sum(attribute='amount') if payments else 0) }}</span>
+                        </div>
+                        <small class="text-muted">Additional Payments</small>
+                    </div>
+                    <div class="col-3">
+                        <div class="mb-2">
+                            <span class="h4 {% if order.balance > 0 %}text-danger{% else %}text-success{% endif %}">
+                                ₹{{ "%.2f"|format(order.balance) }}
+                            </span>
+                        </div>
+                        <small class="text-muted">Balance Due</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Measurements (if available) -->
+{% if measurements %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-rulers"></i> Customer Measurements - {{ order.dress_type }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Basic Measurements</h6>
+                        <div class="row">
+                            {% if measurements.bust %}
+                            <div class="col-6 mb-2"><strong>Bust:</strong> {{ measurements.bust }}"</div>
+                            {% endif %}
+                            {% if measurements.waist %}
+                            <div class="col-6 mb-2"><strong>Waist:</strong> {{ measurements.waist }}"</div>
+                            {% endif %}
+                            {% if measurements.hip %}
+                            <div class="col-6 mb-2"><strong>Hip:</strong> {{ measurements.hip }}"</div>
+                            {% endif %}
+                            {% if measurements.shoulder %}
+                            <div class="col-6 mb-2"><strong>Shoulder:</strong> {{ measurements.shoulder }}"</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Detailed Measurements</h6>
+                        <div class="row">
+                            {% if measurements.arm_length %}
+                            <div class="col-6 mb-2"><strong>Arm Length:</strong> {{ measurements.arm_length }}"</div>
+                            {% endif %}
+                            {% if measurements.blouse_length %}
+                            <div class="col-6 mb-2"><strong>Blouse Length:</strong> {{ measurements.blouse_length }}"</div>
+                            {% endif %}
+                            {% if measurements.kurti_length %}
+                            <div class="col-6 mb-2"><strong>Kurti Length:</strong> {{ measurements.kurti_length }}"</div>
+                            {% endif %}
+                            {% if measurements.salwar_length %}
+                            <div class="col-6 mb-2"><strong>Salwar Length:</strong> {{ measurements.salwar_length }}"</div>
+                            {% endif %}
+                            {% if measurements.bottom_length %}
+                            <div class="col-6 mb-2"><strong>Bottom Length:</strong> {{ measurements.bottom_length }}"</div>
+                            {% endif %}
+                            {% if measurements.neck_depth %}
+                            <div class="col-6 mb-2"><strong>Neck Depth:</strong> {{ measurements.neck_depth }}"</div>
+                            {% endif %}
+                            {% if measurements.back_neck_depth %}
+                            <div class="col-6 mb-2"><strong>Back Neck:</strong> {{ measurements.back_neck_depth }}"</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                {% if measurements.notes %}
+                <div class="mt-3">
+                    <h6 class="text-muted">Special Notes</h6>
+                    <p class="text-muted">{{ measurements.notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Payment History -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-credit-card"></i> Payment History
+                </h5>
+                {% if order.balance > 0 %}
+                <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#paymentModal">
+                    <i class="bi bi-plus-circle"></i> Add Payment
+                </button>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <!-- Advance Payment -->
+                {% if order.advance_paid > 0 %}
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                    <div>
+                        <strong>Advance Payment</strong>
+                        <br><small class="text-muted">{{ order.order_date.strftime('%d %B %Y') }}</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="h6 text-success">₹{{ "%.2f"|format(order.advance_paid) }}</span>
+                        <br><small class="text-muted">Cash</small>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Additional Payments -->
+                {% for payment in payments %}
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                    <div>
+                        <strong>Payment #{{ loop.index }}</strong>
+                        {% if payment.notes %}
+                        <br><small class="text-muted">{{ payment.notes }}</small>
+                        {% endif %}
+                        <br><small class="text-muted">{{ payment.created_at.strftime('%d %B %Y at %I:%M %p') }}</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="h6 text-success">₹{{ "%.2f"|format(payment.amount) }}</span>
+                        <br><small class="text-muted">{{ payment.payment_method.title() }}</small>
+                    </div>
+                </div>
+                {% else %}
+                {% if order.advance_paid == 0 %}
+                <div class="text-center py-4">
+                    <i class="bi bi-credit-card display-4 text-muted"></i>
+                    <h5 class="mt-3 text-muted">No payments recorded</h5>
+                    <p class="text-muted">Add payments as the customer makes them</p>
+                </div>
+                {% endif %}
+                {% endfor %}
+                
+                <!-- Payment Summary -->
+                <div class="mt-3 p-3 bg-light rounded">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <strong class="text-primary">₹{{ "%.2f"|format(order.stitching_cost) }}</strong>
+                            <br><small class="text-muted">Total Amount</small>
+                        </div>
+                        <div class="col-4">
+                            <strong class="text-success">₹{{ "%.2f"|format(order.advance_paid + (payments | sum(attribute='amount') if payments else 0)) }}</strong>
+                            <br><small class="text-muted">Total Paid</small>
+                        </div>
+                        <div class="col-4">
+                            <strong class="{% if order.balance > 0 %}text-danger{% else %}text-success{% endif %}">
+                                ₹{{ "%.2f"|format(order.balance) }}
+                            </strong>
+                            <br><small class="text-muted">Balance Due</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('orders.add_payment', order_id=order.id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Payment Amount <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" step="0.01" class="form-control" id="amount" name="amount" 
+                                   max="{{ order.balance }}" placeholder="0.00" required>
+                        </div>
+                        <div class="form-text">Maximum: ₹{{ "%.2f"|format(order.balance) }}</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="payment_method" class="form-label">Payment Method</label>
+                        <select class="form-select" id="payment_method" name="payment_method">
+                            {% for method_value, method_label in payment_methods %}
+                            <option value="{{ method_value }}">{{ method_label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="2" 
+                                  placeholder="Any additional notes about this payment"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-plus-circle"></i> Add Payment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

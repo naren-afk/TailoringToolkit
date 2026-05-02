@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Add Customer - Tailoring Shop Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">Add New Customer</h1>
+            <a href="{{ url_for('customers.index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Customers
+            </a>
+        </div>
+    </div>
+</div>
+
+<form method="POST" novalidate>
+    <div class="row">
+        <!-- Customer Details -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-person"></i> Customer Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                        <input type="tel" class="form-control" id="phone" name="phone" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address</label>
+                        <textarea class="form-control" id="address" name="address" rows="3" 
+                                  placeholder="Enter customer's address"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Measurements -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-rulers"></i> Measurements (Optional)
+                    </h5>
+                    <small class="text-muted">You can add measurements now or later when creating orders</small>
+                </div>
+                <div class="card-body">
+                    <!-- Measurement tabs -->
+                    <ul class="nav nav-tabs" id="measurementTabs" role="tablist">
+                        {% for dress_type in dress_types %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link {% if loop.first %}active{% endif %}" 
+                                    id="{{ dress_type.lower().replace(' ', '_') }}-tab" 
+                                    data-bs-toggle="tab" 
+                                    data-bs-target="#{{ dress_type.lower().replace(' ', '_') }}-pane" 
+                                    type="button" role="tab">
+                                {{ dress_type }}
+                            </button>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    
+                    <div class="tab-content mt-3" id="measurementTabContent">
+                        {% for dress_type in dress_types %}
+                        {% set dress_key = dress_type.lower().replace(' ', '_') %}
+                        <div class="tab-pane fade {% if loop.first %}show active{% endif %}" 
+                             id="{{ dress_key }}-pane" role="tabpanel">
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-muted mb-3">Basic Measurements (inches)</h6>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Bust</label>
+                                        <input type="number" step="0.1" class="form-control" 
+                                               name="{{ dress_key }}_bust" placeholder="e.g., 36.0">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Waist</label>
+                                        <input type="number" step="0.1" class="form-control" 
+                                               name="{{ dress_key }}_waist" placeholder="e.g., 32.0">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Hip</label>
+                                        <input type="number" step="0.1" class="form-control" 
+                                               name="{{ dress_key }}_hip" placeholder="e.g., 38.0">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Shoulder</label>
+                                        <input type="number" step="0.1" class="form-control" 
+                                               name="{{ dress_key }}_shoulder" placeholder="e.g., 15.0">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <h6 class="text-muted mb-3">Detailed Measurements</h6>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Arm Length</label>
+                                        <input type="number" step="0.1" class="form-control" 
+                                               name="{{ dress_key }}_arm_length" placeholder="e.g., 23.0">
+                                    </div>
+                                    
+                                    {% if 'blouse' in dress_type.lower() %}
+                                    <div class="mb-3">
+                                        <label class="form-label">Blouse Length</label>
+                                        <input type="number" step="0.1" class="form-control" 
+                                               name="{{ dress_key }}_blouse_length" placeholder="e.g., 15.0">
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if 'kurti' in dress_type.lower() %}
+                                    <div class="mb-3">
+                                        <label class="form-label">Kurti Length</label>
+                                        <input type="number" step="0.1" class="form-control" 
+                                               name="{{ dress_key }}_kurti_length" placeholder="e.g., 45.0">
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if 'salwar' in dress_type.lower() %}
+                                    <div class="mb-3">
+                                        <label class="form-label">Salwar Length</label>
+                                        <input type="number" step="0.1" class="form-control" 
+                                               name="{{ dress_key }}_salwar_length" placeholder="e.g., 38.0">
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Bottom Length</label>
+                                        <input type="number" step="0.1" class="form-control" 
+                                               name="{{ dress_key }}_bottom_length" placeholder="e.g., 40.0">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Neck Depth</label>
+                                        <input type="number" step="0.1" class="form-control" 
+                                               name="{{ dress_key }}_neck_depth" placeholder="e.g., 4.0">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Back Neck Depth</label>
+                                        <input type="number" step="0.1" class="form-control" 
+                                               name="{{ dress_key }}_back_neck_depth" placeholder="e.g., 3.0">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <label class="form-label">Special Notes</label>
+                                        <textarea class="form-control" name="{{ dress_key }}_notes" rows="2" 
+                                                  placeholder="Any special requirements or notes for {{ dress_type }}"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Form Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('customers.index') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-person-plus"></i> Add Customer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+// Form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const nameInput = document.getElementById('name');
+    const phoneInput = document.getElementById('phone');
+    
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Clear previous validation states
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        document.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+        
+        // Validate name
+        if (!nameInput.value.trim()) {
+            showError(nameInput, 'Customer name is required');
+            isValid = false;
+        }
+        
+        // Validate phone
+        if (!phoneInput.value.trim()) {
+            showError(phoneInput, 'Phone number is required');
+            isValid = false;
+        } else if (!/^[0-9+\-\s()]{10,15}$/.test(phoneInput.value.trim())) {
+            showError(phoneInput, 'Please enter a valid phone number');
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+        }
+    });
+    
+    function showError(input, message) {
+        input.classList.add('is-invalid');
+        const feedback = document.createElement('div');
+        feedback.className = 'invalid-feedback';
+        feedback.textContent = message;
+        input.parentNode.appendChild(feedback);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,625 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - Tailoring Shop Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">Reports & Analytics</h1>
+            <div>
+                <a href="{{ url_for('reports.quick_reports', period='today') }}" class="btn btn-outline-info me-2">
+                    <i class="bi bi-calendar-day"></i> Today
+                </a>
+                <a href="{{ url_for('reports.quick_reports', period='week') }}" class="btn btn-outline-info me-2">
+                    <i class="bi bi-calendar-week"></i> This Week
+                </a>
+                <a href="{{ url_for('reports.quick_reports', period='month') }}" class="btn btn-outline-info">
+                    <i class="bi bi-calendar-month"></i> This Month
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Date Range and Report Type Selection -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Report Type</label>
+                        <select name="report_type" class="form-select">
+                            <option value="summary" {% if report_type == 'summary' %}selected{% endif %}>Summary Report</option>
+                            <option value="orders" {% if report_type == 'orders' %}selected{% endif %}>Orders Report</option>
+                            <option value="payments" {% if report_type == 'payments' %}selected{% endif %}>Payments Report</option>
+                            <option value="customers" {% if report_type == 'customers' %}selected{% endif %}>Customers Report</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" name="start_date" class="form-control" value="{{ start_date }}" required>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label">End Date</label>
+                        <input type="date" name="end_date" class="form-control" value="{{ end_date }}" required>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-bar-chart"></i> Generate Report
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if report_data %}
+<!-- Report Content -->
+{% if report_data.type == 'summary' %}
+<!-- Summary Report -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-primary">
+            <div class="card-body text-center">
+                <h4 class="text-primary">{{ report_data.totals.orders }}</h4>
+                <p class="card-text">Total Orders</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <h4 class="text-success">₹{{ "%.2f"|format(report_data.totals.revenue) }}</h4>
+                <p class="card-text">Total Revenue</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-info">
+            <div class="card-body text-center">
+                <h4 class="text-info">₹{{ "%.2f"|format(report_data.totals.payments_received) }}</h4>
+                <p class="card-text">Payments Received</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <h4 class="text-warning">₹{{ "%.2f"|format(report_data.totals.pending_payments) }}</h4>
+                <p class="card-text">Pending Payments</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Orders by Status</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Daily Revenue Trend</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Customers -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Top Customers</h5>
+            </div>
+            <div class="card-body">
+                {% if report_data.top_customers %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Orders</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for customer in report_data.top_customers %}
+                            <tr>
+                                <td>
+                                    <strong>{{ customer.name }}</strong><br>
+                                    <small class="text-muted">{{ customer.phone }}</small>
+                                </td>
+                                <td>{{ customer.order_count }}</td>
+                                <td>₹{{ "%.2f"|format(customer.total_value) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No customer data available for this period.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Popular Dress Types</h5>
+            </div>
+            <div class="card-body">
+                {% if report_data.popular_dress_types %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Dress Type</th>
+                                <th>Orders</th>
+                                <th>Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dress_type in report_data.popular_dress_types %}
+                            <tr>
+                                <td>{{ dress_type.dress_type }}</td>
+                                <td>{{ dress_type.count }}</td>
+                                <td>
+                                    {% set percentage = (dress_type.count / report_data.totals.orders * 100) if report_data.totals.orders > 0 else 0 %}
+                                    {{ "%.1f"|format(percentage) }}%
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted">No dress type data available for this period.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% elif report_data.type == 'orders' %}
+<!-- Orders Report -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Orders Report ({{ report_data.period.start }} to {{ report_data.period.end }})</h5>
+                <a href="{{ url_for('reports.export_orders', start_date=start_date, end_date=end_date) }}" 
+                   class="btn btn-outline-success">
+                    <i class="bi bi-download"></i> Export CSV
+                </a>
+            </div>
+            <div class="card-body">
+                <!-- Summary Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h5 class="text-primary">{{ report_data.summary.total_orders }}</h5>
+                            <small class="text-muted">Total Orders</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h5 class="text-success">₹{{ "%.2f"|format(report_data.summary.total_value) }}</h5>
+                            <small class="text-muted">Total Value</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h5 class="text-info">₹{{ "%.2f"|format(report_data.summary.total_advance) }}</h5>
+                            <small class="text-muted">Total Advance</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h5 class="text-warning">₹{{ "%.2f"|format(report_data.summary.total_balance) }}</h5>
+                            <small class="text-muted">Total Balance</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Orders Table -->
+                {% if report_data.orders %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Customer</th>
+                                <th>Dress Type</th>
+                                <th>Order Date</th>
+                                <th>Delivery Date</th>
+                                <th>Cost</th>
+                                <th>Balance</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in report_data.orders %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('orders.view', id=order.id) }}" class="text-decoration-none">
+                                        {{ order.order_number }}
+                                    </a>
+                                </td>
+                                <td>
+                                    {{ order.customer.name }}<br>
+                                    <small class="text-muted">{{ order.customer.phone }}</small>
+                                </td>
+                                <td>{{ order.dress_type }}</td>
+                                <td>{{ order.order_date.strftime('%d/%m/%Y') }}</td>
+                                <td>{{ order.delivery_date.strftime('%d/%m/%Y') }}</td>
+                                <td>₹{{ "%.2f"|format(order.stitching_cost) }}</td>
+                                <td>
+                                    {% if order.balance > 0 %}
+                                    <span class="text-danger">₹{{ "%.2f"|format(order.balance) }}</span>
+                                    {% else %}
+                                    <span class="text-success">Paid</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ order.status_color }}">
+                                        {{ order.status.replace('_', ' ').title() }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-inbox display-4 text-muted"></i>
+                    <p class="text-muted mt-2">No orders found for the selected period</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% elif report_data.type == 'payments' %}
+<!-- Payments Report -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Payments Report ({{ report_data.period.start }} to {{ report_data.period.end }})</h5>
+            </div>
+            <div class="card-body">
+                <!-- Payment Summary -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h5 class="text-success">₹{{ "%.2f"|format(report_data.totals.payments) }}</h5>
+                            <small class="text-muted">Additional Payments</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h5 class="text-info">₹{{ "%.2f"|format(report_data.totals.advance) }}</h5>
+                            <small class="text-muted">Advance Payments</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h5 class="text-primary">₹{{ "%.2f"|format(report_data.totals.total) }}</h5>
+                            <small class="text-muted">Total Received</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment Methods Breakdown -->
+                {% if report_data.payment_methods %}
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">Payment Methods</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Method</th>
+                                                <th>Count</th>
+                                                <th>Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for method in report_data.payment_methods %}
+                                            <tr>
+                                                <td>{{ method.payment_method.title() }}</td>
+                                                <td>{{ method.count }}</td>
+                                                <td>₹{{ "%.2f"|format(method.total) }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Payment Details -->
+                {% if report_data.payments %}
+                <h6>Payment Details</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Order #</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Method</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment, order, customer in report_data.payments %}
+                            <tr>
+                                <td>{{ payment.created_at.strftime('%d/%m/%Y') }}</td>
+                                <td>
+                                    <a href="{{ url_for('orders.view', id=order.id) }}" class="text-decoration-none">
+                                        {{ order.order_number }}
+                                    </a>
+                                </td>
+                                <td>{{ customer.name }}</td>
+                                <td>₹{{ "%.2f"|format(payment.amount) }}</td>
+                                <td>{{ payment.payment_method.title() }}</td>
+                                <td>{{ payment.notes or '-' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% elif report_data.type == 'customers' %}
+<!-- Customers Report -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Customers Report ({{ report_data.period.start }} to {{ report_data.period.end }})</h5>
+                <a href="{{ url_for('reports.export_customers') }}" class="btn btn-outline-success">
+                    <i class="bi bi-download"></i> Export CSV
+                </a>
+            </div>
+            <div class="card-body">
+                <!-- Summary -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h5 class="text-primary">{{ report_data.summary.active_customers }}</h5>
+                            <small class="text-muted">Active Customers</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h5 class="text-success">{{ report_data.summary.new_customers }}</h5>
+                            <small class="text-muted">New Customers</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Active Customers -->
+                {% if report_data.customers_with_orders %}
+                <h6>Active Customers (with orders in period)</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Phone</th>
+                                <th>Orders</th>
+                                <th>Total Value</th>
+                                <th>Pending Balance</th>
+                                <th>Last Order</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for customer_data in report_data.customers_with_orders %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('customers.view', id=customer_data.Customer.id) }}" class="text-decoration-none">
+                                        {{ customer_data.Customer.name }}
+                                    </a>
+                                </td>
+                                <td>{{ customer_data.Customer.phone }}</td>
+                                <td>{{ customer_data.order_count }}</td>
+                                <td>₹{{ "%.2f"|format(customer_data.total_value or 0) }}</td>
+                                <td>
+                                    {% if customer_data.pending_balance and customer_data.pending_balance > 0 %}
+                                    <span class="text-danger">₹{{ "%.2f"|format(customer_data.pending_balance) }}</span>
+                                    {% else %}
+                                    <span class="text-success">Paid</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ customer_data.last_order_date.strftime('%d/%m/%Y') if customer_data.last_order_date else '-' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+                
+                <!-- New Customers -->
+                {% if report_data.new_customers %}
+                <h6 class="mt-4">New Customers (joined in period)</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Phone</th>
+                                <th>Joined Date</th>
+                                <th>Orders Since</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for customer in report_data.new_customers %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('customers.view', id=customer.id) }}" class="text-decoration-none">
+                                        {{ customer.name }}
+                                    </a>
+                                </td>
+                                <td>{{ customer.phone }}</td>
+                                <td>{{ customer.created_at.strftime('%d/%m/%Y') }}</td>
+                                <td>{{ customer.orders|length }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Export Options -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Export Options</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Data Exports</h6>
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('reports.export_customers') }}" class="btn btn-outline-primary">
+                                <i class="bi bi-people"></i> Export All Customers (CSV)
+                            </a>
+                            <a href="{{ url_for('reports.export_orders', start_date=start_date, end_date=end_date) }}" 
+                               class="btn btn-outline-success">
+                                <i class="bi bi-bag"></i> Export Orders for Period (CSV)
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Print Report</h6>
+                        <button onclick="window.print()" class="btn btn-outline-secondary">
+                            <i class="bi bi-printer"></i> Print Current Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-bar-chart display-4 text-muted"></i>
+                <h4 class="mt-3 text-muted">Generate Your Report</h4>
+                <p class="text-muted">Select a date range and report type above to generate comprehensive reports.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+// Chart.js implementation for summary report
+{% if report_data and report_data.type == 'summary' %}
+document.addEventListener('DOMContentLoaded', function() {
+    // Status Distribution Chart
+    const statusCtx = document.getElementById('statusChart');
+    if (statusCtx) {
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [{% for status, count in report_data.orders_by_status %}'{{ status.title() }}'{% if not loop.last %},{% endif %}{% endfor %}],
+                datasets: [{
+                    data: [{% for status, count in report_data.orders_by_status %}{{ count }}{% if not loop.last %},{% endif %}{% endfor %}],
+                    backgroundColor: ['#ffc107', '#17a2b8', '#28a745', '#6c757d']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+    
+    // Revenue Trend Chart
+    const revenueCtx = document.getElementById('revenueChart');
+    if (revenueCtx) {
+        new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: [{% for trend in report_data.daily_trends %}'{{ trend.order_date.strftime("%d/%m") }}'{% if not loop.last %},{% endif %}{% endfor %}],
+                datasets: [{
+                    label: 'Daily Revenue',
+                    data: [{% for trend in report_data.daily_trends %}{{ trend.revenue or 0 }}{% if not loop.last %},{% endif %}{% endfor %}],
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '₹' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Tailoring Shop Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">Settings & Configuration</h1>
+        </div>
+    </div>
+</div>
+
+<!-- Status Overview Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-primary">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title text-primary">{{ total_customers }}</h5>
+                        <p class="card-text">Total Customers</p>
+                    </div>
+                    <i class="bi bi-people fs-1 text-primary opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title text-success">{{ total_orders }}</h5>
+                        <p class="card-text">Total Orders</p>
+                    </div>
+                    <i class="bi bi-bag-check fs-1 text-success opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title text-warning">{{ overdue_orders }}</h5>
+                        <p class="card-text">Overdue Orders</p>
+                    </div>
+                    <i class="bi bi-exclamation-triangle fs-1 text-warning opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card {% if whatsapp_configured %}border-success{% else %}border-danger{% endif %}">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title {% if whatsapp_configured %}text-success{% else %}text-danger{% endif %}">
+                            {% if whatsapp_configured %}✓{% else %}✗{% endif %}
+                        </h5>
+                        <p class="card-text">WhatsApp Config</p>
+                    </div>
+                    <i class="bi bi-whatsapp fs-1 {% if whatsapp_configured %}text-success{% else %}text-danger{% endif %} opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Settings Sections -->
+<div class="row">
+    <!-- Messaging Settings -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-chat-dots"></i> WhatsApp Messaging
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if whatsapp_configured %}
+                <div class="alert alert-success" role="alert">
+                    <i class="bi bi-check-circle"></i> WhatsApp messaging is configured and ready!
+                </div>
+                {% else %}
+                <div class="alert alert-warning" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i> WhatsApp messaging requires Meta WhatsApp Business API configuration.
+                    Please set up your WHATSAPP_ACCESS_TOKEN and WHATSAPP_PHONE_NUMBER_ID environment variables.
+                </div>
+                {% endif %}
+                
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('settings.messaging') }}" class="btn btn-primary">
+                        <i class="bi bi-gear"></i> Messaging Controls
+                    </a>
+                    <a href="{{ url_for('settings.customer_loyalty') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-star"></i> Customer Loyalty
+                    </a>
+                    <a href="{{ url_for('settings.bulk_message') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-broadcast"></i> Bulk Messaging
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Backup & Data -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-shield-check"></i> Backup & Data
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Manage your data backups and exports.</p>
+                
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('settings.backup_settings') }}" class="btn btn-success">
+                        <i class="bi bi-download"></i> Backup Management
+                    </a>
+                    <a href="{{ url_for('reports.export_customers') }}" class="btn btn-outline-success">
+                        <i class="bi bi-file-earmark-spreadsheet"></i> Export Customers
+                    </a>
+                    <a href="{{ url_for('reports.export_orders') }}" class="btn btn-outline-success">
+                        <i class="bi bi-file-earmark-text"></i> Export Orders
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-lightning"></i> Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('customers.add') }}" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-person-plus"></i><br>Add Customer
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('orders.add') }}" class="btn btn-outline-success w-100">
+                            <i class="bi bi-plus-circle"></i><br>New Order
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('pending_orders.index') }}" class="btn btn-outline-warning w-100">
+                            <i class="bi bi-clock"></i><br>Pending Orders
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('reports.index') }}" class="btn btn-outline-info w-100">
+                            <i class="bi bi-graph-up"></i><br>Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- App Information -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-info-circle"></i> Application Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Features</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success"></i> Customer Management</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Order Tracking</li>
+                            <li><i class="bi bi-check-circle text-success"></i> WhatsApp Notifications</li>
+                            <li><i class="bi bi-check-circle text-success"></i> PDF Invoice Generation</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Automatic Backups</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Progressive Web App</h6>
+                        <p class="text-muted">This application can be installed on your device for easy access.</p>
+                        <a href="{{ url_for('install') }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-download"></i> Installation Guide
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

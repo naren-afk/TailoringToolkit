@@ -1,0 +1,503 @@
+{% extends "base.html" %}
+
+{% block title %}Pending Orders - Tailoring Shop Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">Pending Orders Dashboard</h1>
+            <div>
+                <a href="{{ url_for('pending_orders.delivery_calendar') }}" class="btn btn-outline-info me-2">
+                    <i class="bi bi-calendar"></i> Calendar View
+                </a>
+                <a href="{{ url_for('orders.add') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> New Order
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-2 col-sm-4 mb-3">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <h5 class="card-title text-warning">{{ status_counts.total }}</h5>
+                <p class="card-text">Total Pending</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-2 col-sm-4 mb-3">
+        <div class="card border-secondary">
+            <div class="card-body text-center">
+                <h5 class="card-title text-secondary">{{ status_counts.pending }}</h5>
+                <p class="card-text">Order Placed</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-2 col-sm-4 mb-3">
+        <div class="card border-info">
+            <div class="card-body text-center">
+                <h5 class="card-title text-info">{{ status_counts.in_progress }}</h5>
+                <p class="card-text">In Progress</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-2 col-sm-4 mb-3">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <h5 class="card-title text-success">{{ status_counts.stitched }}</h5>
+                <p class="card-text">Ready for Pickup</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-2 col-sm-4 mb-3">
+        <div class="card border-danger">
+            <div class="card-body text-center">
+                <h5 class="card-title text-danger">{{ status_counts.overdue }}</h5>
+                <p class="card-text">Overdue</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-2 col-sm-4 mb-3">
+        <div class="card border-primary">
+            <div class="card-body text-center">
+                <h5 class="card-title text-primary">₹{{ "%.0f"|format(total_pending_amount) }}</h5>
+                <p class="card-text">Pending Amount</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Overdue Orders Alert -->
+{% if overdue_critical or overdue_urgent %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Urgent Attention Required!</h4>
+            
+            {% if overdue_critical %}
+            <h6 class="text-danger">Critical (7+ days overdue): {{ overdue_critical|length }} orders</h6>
+            <ul class="mb-2">
+                {% for order in overdue_critical[:3] %}
+                <li>{{ order.order_number }} - {{ order.customer.name }} ({{ (today - order.delivery_date).days }} days overdue)</li>
+                {% endfor %}
+                {% if overdue_critical|length > 3 %}
+                <li><em>... and {{ overdue_critical|length - 3 }} more</em></li>
+                {% endif %}
+            </ul>
+            {% endif %}
+            
+            {% if overdue_urgent %}
+            <h6 class="text-warning">Urgent (3-7 days overdue): {{ overdue_urgent|length }} orders</h6>
+            {% endif %}
+            
+            <a href="{{ url_for('pending_orders.index', status='overdue') }}" class="btn btn-outline-danger btn-sm">
+                View All Overdue Orders
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Filters and Sorting -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Filter by Status</label>
+                        <select name="status" class="form-select">
+                            <option value="all" {% if current_filters.status == 'all' %}selected{% endif %}>All Pending</option>
+                            <option value="pending" {% if current_filters.status == 'pending' %}selected{% endif %}>Order Placed</option>
+                            <option value="in_progress" {% if current_filters.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                            <option value="stitched" {% if current_filters.status == 'stitched' %}selected{% endif %}>Ready for Pickup</option>
+                            <option value="overdue" {% if current_filters.status == 'overdue' %}selected{% endif %}>Overdue Orders</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label">Sort by</label>
+                        <select name="sort" class="form-select">
+                            <option value="delivery_date" {% if current_filters.sort == 'delivery_date' %}selected{% endif %}>Delivery Date</option>
+                            <option value="order_date" {% if current_filters.sort == 'order_date' %}selected{% endif %}>Order Date</option>
+                            <option value="customer" {% if current_filters.sort == 'customer' %}selected{% endif %}>Customer Name</option>
+                            <option value="status" {% if current_filters.sort == 'status' %}selected{% endif %}>Status</option>
+                            <option value="balance" {% if current_filters.sort == 'balance' %}selected{% endif %}>Balance Amount</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label">Order</label>
+                        <select name="order" class="form-select">
+                            <option value="asc" {% if current_filters.order == 'asc' %}selected{% endif %}>Ascending</option>
+                            <option value="desc" {% if current_filters.order == 'desc' %}selected{% endif %}>Descending</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label">Search Customer</label>
+                        <input type="text" name="customer" class="form-control" 
+                               value="{{ current_filters.customer or '' }}" 
+                               placeholder="Name or phone...">
+                    </div>
+                    
+                    <div class="col-md-1">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Orders List -->
+<div class="row">
+    <div class="col-12">
+        {% if orders.items %}
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Showing {{ orders.items|length }} of {{ orders.total }} orders</span>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#bulkUpdateModal">
+                        <i class="bi bi-arrow-repeat"></i> Bulk Update
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <form id="bulkForm">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <input type="checkbox" id="selectAll" class="form-check-input">
+                                    </th>
+                                    <th>Order #</th>
+                                    <th>Customer</th>
+                                    <th>Dress Type</th>
+                                    <th>Order Date</th>
+                                    <th>Delivery Date</th>
+                                    <th>Days Left</th>
+                                    <th>Status</th>
+                                    <th>Balance</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders.items %}
+                                {% set days_diff = (order.delivery_date - today).days %}
+                                <tr class="{% if order.is_overdue %}table-danger{% elif days_diff <= 2 %}table-warning{% elif order.status == 'stitched' %}table-success{% endif %}">
+                                    <td>
+                                        <input type="checkbox" name="order_ids" value="{{ order.id }}" class="form-check-input order-checkbox">
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('orders.view', id=order.id) }}" class="text-decoration-none">
+                                            <strong>{{ order.order_number }}</strong>
+                                        </a>
+                                        {% if "⭐ PRIORITY" in (order.description or "") %}
+                                        <br><span class="badge bg-warning text-dark">PRIORITY</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <a href="{{ url_for('customers.view', id=order.customer.id) }}" class="text-decoration-none">
+                                                <strong>{{ order.customer.name }}</strong>
+                                            </a>
+                                            <br>
+                                            <small class="text-muted">{{ order.customer.phone }}</small>
+                                        </div>
+                                    </td>
+                                    <td>{{ order.dress_type }}</td>
+                                    <td>{{ order.order_date.strftime('%d/%m') }}</td>
+                                    <td>
+                                        {{ order.delivery_date.strftime('%d/%m/%Y') }}
+                                        {% if order.is_overdue %}
+                                        <br><small class="text-danger"><strong>OVERDUE</strong></small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if order.is_overdue %}
+                                        <span class="text-danger">{{ (today - order.delivery_date).days }}+ overdue</span>
+                                        {% elif days_diff == 0 %}
+                                        <span class="text-warning"><strong>Today</strong></span>
+                                        {% elif days_diff == 1 %}
+                                        <span class="text-warning"><strong>Tomorrow</strong></span>
+                                        {% elif days_diff <= 3 %}
+                                        <span class="text-warning">{{ days_diff }} days</span>
+                                        {% else %}
+                                        <span class="text-muted">{{ days_diff }} days</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ order.status_color }}">
+                                            {{ order.status.replace('_', ' ').title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if order.balance > 0 %}
+                                        <span class="text-danger">₹{{ "%.0f"|format(order.balance) }}</span>
+                                        {% else %}
+                                        <span class="text-success">Paid</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <div class="dropdown">
+                                                <button class="btn btn-outline-secondary dropdown-toggle" 
+                                                        type="button" data-bs-toggle="dropdown">
+                                                    <i class="bi bi-lightning"></i>
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li>
+                                                        <form method="POST" action="{{ url_for('pending_orders.quick_actions', id=order.id) }}" class="d-inline">
+                                                            <input type="hidden" name="action" value="start_work">
+                                                            <button type="submit" class="dropdown-item">
+                                                                <i class="bi bi-play"></i> Start Work
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                    <li>
+                                                        <form method="POST" action="{{ url_for('pending_orders.quick_actions', id=order.id) }}" class="d-inline">
+                                                            <input type="hidden" name="action" value="mark_stitched">
+                                                            <button type="submit" class="dropdown-item">
+                                                                <i class="bi bi-check"></i> Mark Stitched
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                    <li>
+                                                        <form method="POST" action="{{ url_for('pending_orders.quick_actions', id=order.id) }}" class="d-inline">
+                                                            <input type="hidden" name="action" value="mark_delivered">
+                                                            <button type="submit" class="dropdown-item">
+                                                                <i class="bi bi-check-circle"></i> Mark Delivered
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <form method="POST" action="{{ url_for('pending_orders.quick_actions', id=order.id) }}" class="d-inline">
+                                                            <input type="hidden" name="action" value="extend_delivery">
+                                                            <button type="submit" class="dropdown-item">
+                                                                <i class="bi bi-calendar-plus"></i> Extend +2 days
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                    <li>
+                                                        <form method="POST" action="{{ url_for('pending_orders.mark_priority', id=order.id) }}" class="d-inline">
+                                                            <button type="submit" class="dropdown-item">
+                                                                <i class="bi bi-star"></i> Mark Priority
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            
+                                            <a href="{{ url_for('orders.view', id=order.id) }}" 
+                                               class="btn btn-outline-primary" title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        {% if orders.pages > 1 %}
+        <nav aria-label="Orders pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if orders.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('pending_orders.index', page=orders.prev_num, **current_filters) }}">
+                        <i class="bi bi-chevron-left"></i> Previous
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in orders.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != orders.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('pending_orders.index', page=page_num, **current_filters) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if orders.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('pending_orders.index', page=orders.next_num, **current_filters) }}">
+                        Next <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <!-- Empty State -->
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-check-circle display-1 text-success"></i>
+                <h3 class="mt-3 text-success">All caught up!</h3>
+                <p class="text-muted">
+                    {% if current_filters.status != 'all' %}
+                        No orders found with current filters.
+                    {% else %}
+                        No pending orders at the moment. Great work!
+                    {% endif %}
+                </p>
+                <a href="{{ url_for('orders.add') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Create New Order
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Due This Week Alert -->
+{% if due_this_week > 0 %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-info" role="alert">
+            <h5 class="alert-heading"><i class="bi bi-calendar-week"></i> This Week's Schedule</h5>
+            <p>You have <strong>{{ due_this_week }}</strong> orders due for delivery this week. 
+            <a href="{{ url_for('pending_orders.delivery_calendar') }}" class="alert-link">View calendar</a> to see the daily breakdown.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Bulk Update Modal -->
+<div class="modal fade" id="bulkUpdateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('pending_orders.bulk_update') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Bulk Status Update</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Update status for selected orders:</p>
+                    <div class="mb-3">
+                        <label for="new_status" class="form-label">New Status</label>
+                        <select class="form-select" id="new_status" name="new_status" required>
+                            <option value="">Select new status...</option>
+                            <option value="pending">Order Placed</option>
+                            <option value="in_progress">Stitching in Progress</option>
+                            <option value="stitched">Stitched (Ready for Pickup)</option>
+                            <option value="delivered">Delivered to Customer</option>
+                        </select>
+                    </div>
+                    <p class="text-muted small">
+                        <i class="bi bi-info-circle"></i> 
+                        SMS notifications will be sent for status changes (if enabled).
+                    </p>
+                    <div id="selectedOrdersList"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="bulkUpdateBtn" disabled>
+                        <i class="bi bi-arrow-repeat"></i> Update Selected Orders
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAll = document.getElementById('selectAll');
+    const orderCheckboxes = document.querySelectorAll('.order-checkbox');
+    const bulkUpdateBtn = document.getElementById('bulkUpdateBtn');
+    const selectedOrdersList = document.getElementById('selectedOrdersList');
+    const bulkUpdateModal = document.getElementById('bulkUpdateModal');
+    
+    // Select all functionality
+    selectAll.addEventListener('change', function() {
+        orderCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateBulkButton();
+    });
+    
+    // Individual checkbox change
+    orderCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateBulkButton);
+    });
+    
+    function updateBulkButton() {
+        const selectedOrders = document.querySelectorAll('.order-checkbox:checked');
+        const count = selectedOrders.length;
+        
+        bulkUpdateBtn.disabled = count === 0;
+        bulkUpdateBtn.textContent = count > 0 ? `Update ${count} Selected Orders` : 'Update Selected Orders';
+        
+        // Update selected orders list in modal
+        if (count > 0) {
+            const orderNumbers = Array.from(selectedOrders).map(cb => {
+                const row = cb.closest('tr');
+                return row.cells[1].textContent.trim();
+            });
+            selectedOrdersList.innerHTML = `
+                <div class="alert alert-info">
+                    <strong>Selected orders (${count}):</strong><br>
+                    ${orderNumbers.join(', ')}
+                </div>
+            `;
+        } else {
+            selectedOrdersList.innerHTML = '';
+        }
+    }
+    
+    // Add selected order IDs to bulk update form
+    bulkUpdateModal.addEventListener('show.bs.modal', function() {
+        const selectedOrders = document.querySelectorAll('.order-checkbox:checked');
+        const form = this.querySelector('form');
+        
+        // Remove existing hidden inputs
+        form.querySelectorAll('input[name="order_ids"]').forEach(input => input.remove());
+        
+        // Add current selections
+        selectedOrders.forEach(checkbox => {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'order_ids';
+            hiddenInput.value = checkbox.value;
+            form.appendChild(hiddenInput);
+        });
+    });
+});
+</script>
+{% endblock %}

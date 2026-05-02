@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice {{ order.order_number }} - Tailoring Shop</title>
+    <style>
+        @media print {
+            .no-print { display: none; }
+            body { margin: 0; }
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+            color: #333;
+        }
+        
+        .invoice-header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 20px;
+        }
+        
+        .shop-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 5px;
+        }
+        
+        .shop-details {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.4;
+        }
+        
+        .invoice-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        
+        .invoice-details, .customer-details {
+            flex: 1;
+        }
+        
+        .invoice-details {
+            margin-right: 20px;
+        }
+        
+        .customer-details {
+            margin-left: 20px;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        
+        .info-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            width: 120px;
+            color: #555;
+        }
+        
+        .info-value {
+            flex: 1;
+        }
+        
+        .order-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+        }
+        
+        .order-table th,
+        .order-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        .order-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .order-table .text-right {
+            text-align: right;
+        }
+        
+        .total-section {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .total-table {
+            border-collapse: collapse;
+            min-width: 300px;
+        }
+        
+        .total-table td {
+            padding: 8px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .total-table .label {
+            font-weight: bold;
+            text-align: right;
+            color: #555;
+        }
+        
+        .total-table .amount {
+            text-align: right;
+            font-weight: bold;
+        }
+        
+        .total-row {
+            border-top: 2px solid #007bff !important;
+            background-color: #f8f9fa;
+        }
+        
+        .total-row .amount {
+            color: #007bff;
+            font-size: 18px;
+        }
+        
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .status-pending { background-color: #fff3cd; color: #856404; }
+        .status-in_progress { background-color: #d1ecf1; color: #0c5460; }
+        .status-stitched { background-color: #d4edda; color: #155724; }
+        .status-delivered { background-color: #e2e3e5; color: #383d41; }
+        
+        .print-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .print-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print">
+        <button class="print-button" onclick="window.print()">
+            🖨️ Print Invoice
+        </button>
+    </div>
+    
+    <!-- Invoice Header -->
+    <div class="invoice-header">
+        <div class="shop-name">Your Tailoring Shop Name</div>
+        <div class="shop-details">
+            Shop Address Line 1<br>
+            Shop Address Line 2, City, State - PIN<br>
+            Phone: +91-XXXXXXXXXX | Email: info@yourtailoringshop.com
+        </div>
+    </div>
+    
+    <!-- Invoice and Customer Information -->
+    <div class="invoice-info">
+        <div class="invoice-details">
+            <div class="section-title">Invoice Details</div>
+            <div class="info-row">
+                <div class="info-label">Invoice No:</div>
+                <div class="info-value">{{ order.order_number }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Invoice Date:</div>
+                <div class="info-value">{{ moment().format('DD/MM/YYYY') }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Order Date:</div>
+                <div class="info-value">{{ order.order_date.strftime('%d/%m/%Y') }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Delivery Date:</div>
+                <div class="info-value">{{ order.delivery_date.strftime('%d/%m/%Y') }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Status:</div>
+                <div class="info-value">
+                    <span class="status-badge status-{{ order.status }}">
+                        {{ order.status.replace('_', ' ').title() }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="customer-details">
+            <div class="section-title">Bill To</div>
+            <div class="info-row">
+                <div class="info-label">Name:</div>
+                <div class="info-value">{{ order.customer.name }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Phone:</div>
+                <div class="info-value">{{ order.customer.phone }}</div>
+            </div>
+            {% if order.customer.address %}
+            <div class="info-row">
+                <div class="info-label">Address:</div>
+                <div class="info-value">{{ order.customer.address }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Order Details Table -->
+    <table class="order-table">
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th class="text-right">Qty</th>
+                <th class="text-right">Rate</th>
+                <th class="text-right">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <strong>{{ order.dress_type }}</strong>
+                    {% if order.description %}
+                    <br><small style="color: #666;">{{ order.description }}</small>
+                    {% endif %}
+                </td>
+                <td class="text-right">{{ order.quantity }}</td>
+                <td class="text-right">₹{{ "%.2f"|format(order.stitching_cost) }}</td>
+                <td class="text-right">₹{{ "%.2f"|format(order.stitching_cost * order.quantity) }}</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <!-- Total Section -->
+    <div class="total-section">
+        <table class="total-table">
+            <tr>
+                <td class="label">Subtotal:</td>
+                <td class="amount">₹{{ "%.2f"|format(order.stitching_cost * order.quantity) }}</td>
+            </tr>
+            <tr>
+                <td class="label">Advance Paid:</td>
+                <td class="amount">₹{{ "%.2f"|format(order.advance_paid) }}</td>
+            </tr>
+            {% if order.payments %}
+            <tr>
+                <td class="label">Additional Payments:</td>
+                <td class="amount">₹{{ "%.2f"|format(order.payments | sum(attribute='amount')) }}</td>
+            </tr>
+            {% endif %}
+            <tr class="total-row">
+                <td class="label">Balance Due:</td>
+                <td class="amount">₹{{ "%.2f"|format(order.balance) }}</td>
+            </tr>
+        </table>
+    </div>
+    
+    <!-- Payment History (if any) -->
+    {% if order.payments %}
+    <div style="margin-top: 40px;">
+        <div class="section-title">Payment History</div>
+        <table class="order-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Payment Method</th>
+                    <th>Notes</th>
+                    <th class="text-right">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if order.advance_paid > 0 %}
+                <tr>
+                    <td>{{ order.order_date.strftime('%d/%m/%Y') }}</td>
+                    <td>Cash (Advance)</td>
+                    <td>Advance payment</td>
+                    <td class="text-right">₹{{ "%.2f"|format(order.advance_paid) }}</td>
+                </tr>
+                {% endif %}
+                {% for payment in order.payments %}
+                <tr>
+                    <td>{{ payment.created_at.strftime('%d/%m/%Y') }}</td>
+                    <td>{{ payment.payment_method.title() }}</td>
+                    <td>{{ payment.notes or '-' }}</td>
+                    <td class="text-right">₹{{ "%.2f"|format(payment.amount) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+    <!-- Terms and Conditions -->
+    <div style="margin-top: 40px;">
+        <div class="section-title">Terms & Conditions</div>
+        <div style="font-size: 12px; color: #666; line-height: 1.5;">
+            <ul style="margin: 0; padding-left: 20px;">
+                <li>Please collect your order on or before the delivery date mentioned above.</li>
+                <li>Any alterations after final fitting will incur additional charges.</li>
+                <li>Orders not collected within 30 days of delivery date will be disposed of.</li>
+                <li>We are not responsible for any damage to clothes due to fabric defects.</li>
+                <li>All disputes are subject to local jurisdiction only.</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+        <div style="margin-bottom: 10px;">
+            <strong>Thank you for choosing our tailoring services!</strong>
+        </div>
+        <div>
+            For any queries, please contact us at +91-XXXXXXXXXX
+        </div>
+        <div style="margin-top: 15px; font-size: 12px;">
+            This is a computer-generated invoice. No signature required.
+        </div>
+    </div>
+    
+    <script>
+        // Auto-print when opened in new window
+        if (window.opener) {
+            window.onload = function() {
+                setTimeout(function() {
+                    window.print();
+                }, 1000);
+            };
+        }
+    </script>
+</body>
+</html>

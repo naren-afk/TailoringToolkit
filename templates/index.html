@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Tailoring Shop Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">Dashboard</h1>
+            <div class="text-end">
+                <small class="text-muted">Last updated: {{ current_time.strftime('%d/%m/%Y %H:%M') }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Metrics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-primary">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title text-primary">₹{{ "%.2f"|format(monthly_revenue) }}</h5>
+                        <p class="card-text">Monthly Revenue</p>
+                    </div>
+                    <i class="bi bi-currency-rupee fs-1 text-primary opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title text-warning">{{ pending_count }}</h5>
+                        <p class="card-text">Pending Orders</p>
+                    </div>
+                    <i class="bi bi-clock-history fs-1 text-warning opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-danger">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title text-danger">₹{{ "%.2f"|format(pending_payments) }}</h5>
+                        <p class="card-text">Pending Payments</p>
+                    </div>
+                    <i class="bi bi-exclamation-triangle fs-1 text-danger opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title text-success">{{ total_customers }}</h5>
+                        <p class="card-text">Total Customers</p>
+                    </div>
+                    <i class="bi bi-people fs-1 text-success opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Overdue Orders Alert -->
+{% if overdue_orders %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Overdue Orders Alert!</h4>
+            <p>You have <strong>{{ overdue_orders|length }}</strong> overdue orders that need immediate attention:</p>
+            <ul class="mb-3">
+                {% for order in overdue_orders[:5] %}
+                <li>
+                    <strong>{{ order.order_number }}</strong> - {{ order.customer.name }} 
+                    (Due: {{ order.delivery_date.strftime('%d/%m/%Y') }})
+                    <span class="badge bg-{{ order.status_color }}">{{ order.status.title() }}</span>
+                </li>
+                {% endfor %}
+                {% if overdue_orders|length > 5 %}
+                <li><em>... and {{ overdue_orders|length - 5 }} more</em></li>
+                {% endif %}
+            </ul>
+            <a href="{{ url_for('pending_orders.index', status='overdue') }}" class="btn btn-outline-danger">
+                <i class="bi bi-eye"></i> View All Overdue Orders
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <!-- Recent Orders -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-clock-history"></i> Recent Orders
+                </h5>
+                <a href="{{ url_for('orders.index') }}" class="btn btn-sm btn-outline-primary">
+                    View All <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_orders %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Customer</th>
+                                <th>Dress Type</th>
+                                <th>Delivery Date</th>
+                                <th>Status</th>
+                                <th>Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in recent_orders %}
+                            <tr class="{% if order.is_overdue %}table-danger{% endif %}">
+                                <td>
+                                    <a href="{{ url_for('orders.view', id=order.id) }}" class="text-decoration-none">
+                                        {{ order.order_number }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ order.customer.name }}</strong><br>
+                                        <small class="text-muted">{{ order.customer.phone }}</small>
+                                    </div>
+                                </td>
+                                <td>{{ order.dress_type }}</td>
+                                <td>
+                                    {{ order.delivery_date.strftime('%d/%m/%Y') }}
+                                    {% if order.is_overdue %}
+                                    <br><small class="text-danger">Overdue!</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ order.status_color }}">
+                                        {{ order.status.replace('_', ' ').title() }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if order.balance > 0 %}
+                                    <span class="text-danger">₹{{ "%.2f"|format(order.balance) }}</span>
+                                    {% else %}
+                                    <span class="text-success">Paid</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-inbox display-4 text-muted"></i>
+                    <p class="text-muted mt-2">No recent orders found</p>
+                    <a href="{{ url_for('orders.add') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Add First Order
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-lightning"></i> Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('customers.add') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-person-plus"></i> Add New Customer
+                    </a>
+                    <a href="{{ url_for('orders.add') }}" class="btn btn-outline-success">
+                        <i class="bi bi-plus-circle"></i> Create New Order
+                    </a>
+                    <a href="{{ url_for('pending_orders.index') }}" class="btn btn-outline-warning">
+                        <i class="bi bi-clock"></i> View Pending Orders
+                    </a>
+                    <a href="{{ url_for('reports.quick_reports', period='today') }}" class="btn btn-outline-info">
+                        <i class="bi bi-graph-up"></i> Today's Report
+                    </a>
+                </div>
+                
+                <hr class="my-3">
+                
+                <h6 class="mb-2">Export Data</h6>
+                <div class="d-grid gap-1">
+                    <a href="{{ url_for('reports.export_customers') }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-download"></i> Export Customers
+                    </a>
+                    <a href="{{ url_for('reports.export_orders') }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-download"></i> Export Orders
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Installation Prompt -->
+        <div class="card mt-3" id="install-prompt" style="display: none;">
+            <div class="card-body text-center">
+                <i class="bi bi-download display-6 text-primary"></i>
+                <h6 class="mt-2">Install App</h6>
+                <p class="small text-muted">Add this app to your home screen for easy access!</p>
+                <button class="btn btn-primary btn-sm" onclick="installApp()">
+                    <i class="bi bi-plus-square"></i> Install Now
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Distribution Chart -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-pie-chart"></i> Current Orders Status Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Status distribution chart
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('statusChart').getContext('2d');
+    
+    // You can make this dynamic by passing data from the backend
+    const statusChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Pending', 'In Progress', 'Stitched', 'Delivered'],
+            datasets: [{
+                data: [{{ pending_count }}, 0, 0, 0], // You can make this dynamic
+                backgroundColor: [
+                    '#ffc107',
+                    '#17a2b8',
+                    '#28a745',
+                    '#6c757d'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+});
+
+// Show install prompt for PWA
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('install-prompt').style.display = 'block';
+});
+
+function installApp() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                document.getElementById('install-prompt').style.display = 'none';
+            }
+            deferredPrompt = null;
+        });
+    } else {
+        alert('To install this app:\n\n1. Open menu in your browser\n2. Look for "Add to Home Screen" or "Install App"');
+    }
+}
+</script>
+{% endblock %}
